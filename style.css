@@ -555,6 +555,62 @@ input[type="range"] { width: 200px; accent-color: var(--brand); }
 }
 @keyframes fadeOutFast { to { opacity: 0; } }
 
+/* ---------- 10b. MANDOS TÁCTILES ---------- */
+#layer-touch { z-index: 5; pointer-events: none; display: none; }
+body.is-touch #layer-touch:not(.hidden) { display: block; }
+
+.pad { position: absolute; bottom: 14px; display: flex; align-items: flex-end; gap: 12px; }
+.pad-left  { left: 16px; }
+.pad-right { right: 16px; }
+
+.tbtn {
+  pointer-events: auto;
+  width: 74px; height: 74px;
+  font-size: 26px; line-height: 1; color: var(--ink);
+  background: rgba(20, 24, 44, .55);
+  border: 3px solid rgba(120, 130, 190, .7);
+  border-radius: 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.tbtn:active, .tbtn.is-held {
+  background: rgba(255, 204, 0, .55);
+  border-color: var(--brand);
+  transform: scale(.94);
+}
+.tbtn-sm  { width: 58px; height: 58px; font-size: 20px; }
+.tbtn-big {
+  width: 96px; height: 96px; font-size: 30px; font-weight: 700; letter-spacing: 1px;
+  background: rgba(255, 204, 0, .30); border-color: var(--brand); color: #fff3c0;
+}
+
+/* con una pregunta o la pausa abiertas, los mandos estorban */
+body.is-touch.overlay-open #layer-touch { display: none; }
+
+/* ---------- 10c. AVISO DE GIRAR EL MÓVIL ---------- */
+#rotate { display: none; }
+
+@media (orientation: portrait) and (max-width: 950px) {
+  #rotate {
+    display: flex; position: fixed; inset: 0; z-index: 99;
+    align-items: center; justify-content: center;
+    background: #05060d; text-align: center; padding: 24px;
+  }
+  #game { visibility: hidden; }
+  .rotate-box { max-width: 300px; }
+  .rotate-icon {
+    font-size: 90px; color: var(--brand); line-height: 1;
+    animation: rotateHint 1.8s ease-in-out infinite;
+  }
+  .rotate-title { margin-top: 18px; font-size: 20px; letter-spacing: 2px; color: var(--ink); }
+  .rotate-sub   { margin-top: 8px; font-size: 13px; color: var(--ink-dim); }
+}
+@keyframes rotateHint {
+  0%, 45%   { transform: rotate(90deg); }
+  55%, 100% { transform: rotate(0deg); }
+}
+
 /* ---------- 11. UTILIDADES Y ESCALADO ---------- */
 .hidden { display: none !important; }
 .no-anim, .no-anim * { animation: none !important; transition: none !important; }

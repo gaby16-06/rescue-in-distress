@@ -838,6 +838,40 @@ RID.Input = (function () {
 
   function onBlur() { down = {}; pressed = {}; released = {}; mouse.down = false; }
 
+  /* ---------- táctil ---------- */
+  var isTouch = false;
+
+  function holdKey(k, on) {
+    if (on) { if (!down[k]) pressed[k] = true; down[k] = true; }
+    else    { down[k] = false; released[k] = true; }
+  }
+
+  /* Botones de pantalla: cada uno se comporta como su tecla */
+  function wireTouchPad() {
+    U.els('#layer-touch .tbtn').forEach(function (b) {
+      var k = b.getAttribute('data-key');
+      function press(e) { e.preventDefault(); b.classList.add('is-held'); holdKey(k, true); }
+      function lift(e)  { e.preventDefault(); b.classList.remove('is-held'); holdKey(k, false); }
+      U.on(b, 'touchstart', press, { passive: false });
+      U.on(b, 'touchend', lift, { passive: false });
+      U.on(b, 'touchcancel', lift, { passive: false });
+      /* también con ratón, para poder probarlo en el ordenador */
+      U.on(b, 'mousedown', press);
+      U.on(b, 'mouseup', lift);
+      U.on(b, 'mouseleave', function () { b.classList.remove('is-held'); holdKey(k, false); });
+    });
+  }
+
+  /* Arrastrar el dedo por el escenario apunta, igual que el ratón */
+  function onTouch(e) {
+    if (e.target.closest && e.target.closest('#layer-touch')) return;
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    var p = toLogical(t.clientX, t.clientY);
+    mouse.x = p.x; mouse.y = p.y;
+    if (e.type === 'touchstart' && !locked) mouse.clicked = true;
+  }
+
   function init() {
     gameEl = U.el('#game');
     U.on(window, 'keydown', onKeyDown);
@@ -847,6 +881,18 @@ RID.Input = (function () {
     U.on(window, 'mousedown', onMouseDown);
     U.on(window, 'mouseup', onMouseUp);
     U.on(window, 'contextmenu', function (e) { e.preventDefault(); });
+
+    isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+      document.body.classList.add('is-touch');
+      wireTouchPad();
+      U.on(gameEl, 'touchstart', onTouch, { passive: false });
+      U.on(gameEl, 'touchmove',  onTouch, { passive: false });
+      /* nada de zoom con dos dedos ni scroll mientras se juega */
+      U.on(document, 'touchmove', function (e) {
+        if (e.target.closest && e.target.closest('#game')) e.preventDefault();
+      }, { passive: false });
+    }
   }
 
   /* Lo llama el bucle al final de cada fotograma */
@@ -866,7 +912,8 @@ RID.Input = (function () {
   return {
     init: init, endFrame: endFrame, isDown: isDown, pressed: justPressed, released: justReleased,
     mouse: getMouse, onClick: onClick, offClick: offClick,
-    lock: lock, unlock: unlock, isLocked: isLocked, clear: clearAll
+    lock: lock, unlock: unlock, isLocked: isLocked, clear: clearAll,
+    isTouch: function () { return isTouch; }
   };
 })();
 
@@ -1036,6 +1083,7 @@ RID.Screens = (function () {
     if (!n) { console.warn('[RID] overlay inexistente:', id); return; }
     if (openOverlays.indexOf(id) < 0) openOverlays.push(id);
     n.classList.add('is-active');
+    document.body.classList.add('overlay-open');
     RID.Input.lock();
     RID.Events.emit('overlay:open', { id: id, data: data });
   }
@@ -1045,7 +1093,10 @@ RID.Screens = (function () {
     if (n) n.classList.remove('is-active');
     var i = openOverlays.indexOf(id);
     if (i >= 0) openOverlays.splice(i, 1);
-    if (!openOverlays.length) RID.Input.unlock();
+    if (!openOverlays.length) {
+      document.body.classList.remove('overlay-open');
+      RID.Input.unlock();
+    }
     RID.Events.emit('overlay:close', { id: id });
   }
 
@@ -1073,7 +1124,10 @@ RID.Screens = (function () {
   }
 
   /* --- HUD --- */
-  function setHUD(visible) { U.show(U.el('#layer-hud'), visible); }
+  function setHUD(visible) {
+    U.show(U.el('#layer-hud'), visible);
+    U.show(U.el('#layer-touch'), visible);   // los mandos táctiles van con el HUD
+  }
 
   return {
     show: show, hide: hide, hideAll: hideAll, current: current,

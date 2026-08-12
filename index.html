@@ -439,7 +439,29 @@
     <!-- CAPA 7 : TOASTS -->
     <div id="layer-toast" class="layer"></div>
 
+    <!-- CAPA 8 : MANDOS TÁCTILES (solo en pantallas con dedo) -->
+    <div id="layer-touch" class="layer hidden">
+      <div class="pad pad-left">
+        <button class="tbtn" type="button" data-key="left"  aria-label="Izquierda">◀</button>
+        <button class="tbtn" type="button" data-key="right" aria-label="Derecha">▶</button>
+        <button class="tbtn tbtn-sm" type="button" data-key="down" aria-label="Agacharse">▼</button>
+      </div>
+      <div class="pad pad-right">
+        <button class="tbtn tbtn-sm" type="button" data-key="up" aria-label="Acelerar">▲</button>
+        <button class="tbtn tbtn-big" type="button" data-key="action" aria-label="Saltar o disparar">A</button>
+      </div>
+    </div>
+
   </div><!-- /game -->
+
+  <!-- Aviso de girar el móvil -->
+  <div id="rotate">
+    <div class="rotate-box">
+      <div class="rotate-icon">▭</div>
+      <p class="rotate-title">Gira el teléfono</p>
+      <p class="rotate-sub">Rotate your phone to play</p>
+    </div>
+  </div>
 </div><!-- /stage -->
 
 <script src="script.js"></script>
