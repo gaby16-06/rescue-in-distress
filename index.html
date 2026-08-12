@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rescue in Distress</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- =========================================================
+     RESCUE IN DISTRESS — v1.0
+     index.html : ESTRUCTURA ÚNICAMENTE. Cero lógica, cero estilos.
+     Capas: bg < world < fx < hud < screen < overlay < toast
+     ========================================================= -->
+
+<div id="stage">
+  <div id="game">
+
+    <!-- CAPA 1 : fondo (imagen del nivel / mundo / tienda) -->
+    <div id="layer-bg" class="layer">
+      <img id="bg-image" alt="">
+      <canvas id="bg-fallback" width="960" height="540"></canvas>
+    </div>
+
+    <!-- CAPA 2 : mundo jugable -->
+    <canvas id="layer-world" class="layer" width="960" height="540"></canvas>
+
+    <!-- CAPA 3 : efectos (linterna, partículas, muerte) -->
+    <canvas id="layer-fx" class="layer" width="960" height="540"></canvas>
+
+    <!-- CAPA 4 : HUD -->
+    <div id="layer-hud" class="layer hidden">
+      <div class="hud-row hud-top">
+        <div id="hud-lives" class="hud-box" aria-label="Lives"></div>
+        <div id="hud-coins" class="hud-box">
+          <span class="coin-icon"></span><span id="hud-coins-value">0</span>
+        </div>
+        <div id="hud-level" class="hud-box">
+          <span id="hud-world-name">Mushroom Land</span>
+          <span id="hud-level-name">Level 1</span>
+        </div>
+        <button id="hud-pause" class="hud-btn" type="button" title="Pause">II</button>
+      </div>
+
+      <div class="hud-row hud-bars">
+        <div id="hud-gauge" class="gauge hidden">
+          <span id="hud-gauge-label" class="gauge-label">ENERGY</span>
+          <div class="gauge-track"><div id="hud-gauge-fill" class="gauge-fill"></div></div>
+        </div>
+        <div id="hud-objective" class="hud-objective"></div>
+      </div>
+
+      <div class="hud-row hud-bottom">
+        <div class="progress">
+          <div class="progress-track"><div id="hud-progress-fill" class="progress-fill"></div></div>
+          <span id="hud-progress-text" class="progress-text">0 / 20</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPA 5 : PANTALLAS -->
+    <div id="layer-screen" class="layer">
+
+      <!-- 1. BOOT -->
+      <section class="screen" data-screen="boot">
+        <div class="panel panel-boot">
+          <h1 class="logo">RESCUE<span>in</span>DISTRESS</h1>
+          <div class="loader">
+            <div class="loader-track"><div id="boot-fill" class="loader-fill"></div></div>
+            <p id="boot-text" class="loader-text">Loading… 0%</p>
+          </div>
+          <button id="boot-enter" class="btn btn-primary hidden" type="button">PRESS START</button>
+          <p id="boot-missing" class="note hidden"></p>
+        </div>
+      </section>
+
+      <!-- 2. TITLE -->
+      <section class="screen" data-screen="title">
+        <div class="panel panel-title">
+          <h1 class="logo">RESCUE<span>in</span>DISTRESS</h1>
+          <p class="tagline" data-i18n="tagline"></p>
+          <div class="menu">
+            <button id="title-new" class="btn btn-primary" type="button" data-i18n="menuNew"></button>
+            <button id="title-continue" class="btn" type="button" data-i18n="menuContinue"></button>
+            <button id="title-settings" class="btn" type="button" data-i18n="menuSettings"></button>
+          </div>
+          <p class="version">v1.0</p>
+        </div>
+      </section>
+
+      <!-- 3. LANGUAGE -->
+      <section class="screen" data-screen="language">
+        <div class="panel">
+          <h2 class="panel-title-text">STORY LANGUAGE</h2>
+          <p class="note">The story can be in Spanish or English.<br>Questions are always in English.</p>
+          <div class="choice-row">
+            <button class="btn btn-choice" type="button" data-lang="es">ESPAÑOL</button>
+            <button class="btn btn-choice" type="button" data-lang="en">ENGLISH</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PLAYER NAME -->
+      <section class="screen" data-screen="player-name">
+        <div class="panel">
+          <h2 class="panel-title-text" data-i18n="askPlayerName"></h2>
+          <input id="input-player-name" class="text-input" type="text" maxlength="12" autocomplete="off" spellcheck="false">
+          <p id="player-name-error" class="error hidden"></p>
+          <div class="choice-row">
+            <button id="player-name-next" class="btn btn-primary" type="button" data-i18n="next"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. AVATAR BUILDER -->
+      <section class="screen" data-screen="avatar">
+        <div class="panel panel-wide">
+          <h2 class="panel-title-text" data-i18n="buildAvatar"></h2>
+          <div class="builder">
+            <div class="builder-preview">
+              <canvas id="avatar-preview" width="220" height="260"></canvas>
+              <p id="avatar-preview-name" class="preview-name"></p>
+            </div>
+            <div class="builder-options">
+              <div class="opt-group">
+                <span class="opt-label" data-i18n="optHair"></span>
+                <div id="opt-hair" class="opt-list"></div>
+              </div>
+              <div class="opt-group">
+                <span class="opt-label" data-i18n="optFace"></span>
+                <div id="opt-face" class="opt-list"></div>
+              </div>
+              <div class="opt-group">
+                <span class="opt-label" data-i18n="optShirt"></span>
+                <div id="opt-shirt" class="opt-list opt-colors"></div>
+              </div>
+            </div>
+          </div>
+          <div class="choice-row">
+            <button id="avatar-back" class="btn" type="button" data-i18n="back"></button>
+            <button id="avatar-next" class="btn btn-primary" type="button" data-i18n="next"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. PET NAME -->
+      <section class="screen" data-screen="pet-name">
+        <div class="panel">
+          <h2 class="panel-title-text" data-i18n="askPetName"></h2>
+          <input id="input-pet-name" class="text-input" type="text" maxlength="12" autocomplete="off" spellcheck="false">
+          <p id="pet-name-error" class="error hidden"></p>
+          <div class="choice-row">
+            <button id="pet-name-back" class="btn" type="button" data-i18n="back"></button>
+            <button id="pet-name-next" class="btn btn-primary" type="button" data-i18n="next"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. PET BUILDER -->
+      <section class="screen" data-screen="pet-builder">
+        <div class="panel panel-wide">
+          <h2 class="panel-title-text" data-i18n="buildPet"></h2>
+          <div class="builder">
+            <div class="builder-preview">
+              <canvas id="pet-preview" width="220" height="260"></canvas>
+              <p id="pet-preview-name" class="preview-name"></p>
+            </div>
+            <div class="builder-options">
+              <div class="opt-group">
+                <span class="opt-label" data-i18n="optSpecies"></span>
+                <div id="opt-species" class="opt-list"></div>
+              </div>
+              <div class="opt-group">
+                <span class="opt-label" data-i18n="optCoat"></span>
+                <div id="opt-coat" class="opt-list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="choice-row">
+            <button id="pet-back" class="btn" type="button" data-i18n="back"></button>
+            <button id="pet-next" class="btn btn-primary" type="button" data-i18n="start"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. STORY -->
+      <section class="screen" data-screen="story">
+        <canvas id="story-canvas" width="960" height="400"></canvas>
+        <div class="story-box">
+          <p id="story-text" class="story-text"></p>
+          <div class="story-controls">
+            <button id="story-skip" class="btn btn-small" type="button" data-i18n="skip"></button>
+            <button id="story-next" class="btn btn-primary btn-small" type="button" data-i18n="continue"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. LOBBY -->
+      <section class="screen" data-screen="lobby">
+        <div class="lobby-frame">
+          <h2 id="lobby-world-name" class="world-name"></h2>
+          <p id="lobby-world-sub" class="world-sub"></p>
+          <div id="lobby-levels" class="lobby-levels"></div>
+          <div class="choice-row">
+            <button id="lobby-map" class="btn" type="button" data-i18n="openMap"></button>
+            <button id="lobby-title" class="btn btn-ghost" type="button" data-i18n="quitToTitle"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. MAP -->
+      <section class="screen" data-screen="map">
+        <div class="map-frame">
+          <h2 class="map-title" data-i18n="mapTitle"></h2>
+          <canvas id="map-canvas" width="900" height="380"></canvas>
+          <div class="map-info">
+            <span id="map-node-label" class="map-node-label"></span>
+            <span id="map-hint" class="map-hint" data-i18n="mapHint"></span>
+          </div>
+          <div class="choice-row">
+            <button id="map-enter" class="btn btn-primary" type="button" data-i18n="enter"></button>
+            <button id="map-lobby" class="btn" type="button" data-i18n="openLobby"></button>
+            <button id="map-results" class="btn" type="button" data-i18n="viewResults"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. SHOP -->
+      <section class="screen" data-screen="shop">
+        <div class="shop-frame">
+          <h2 class="panel-title-text" data-i18n="shopTitle"></h2>
+          <div class="shop-wallet">
+            <span class="coin-icon"></span><span id="shop-coins">0</span>
+          </div>
+          <div class="shop-tabs">
+            <button class="tab is-active" type="button" data-tab="upgrade" data-i18n="tabUpgrades"></button>
+            <button class="tab" type="button" data-tab="cosmetic" data-i18n="tabCosmetics"></button>
+          </div>
+          <div id="shop-items" class="shop-items"></div>
+          <div class="choice-row">
+            <button id="shop-leave" class="btn btn-primary" type="button" data-i18n="leaveShop"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 16. LEVEL FAILED (se pierden las 3 vidas: el nivel NO se repite) -->
+      <section class="screen" data-screen="game-over">
+        <div class="panel panel-dark">
+          <h2 class="big-title bad" data-i18n="levelFailed"></h2>
+          <p id="game-over-sub" class="note"></p>
+          <ul class="summary">
+            <li><span data-i18n="sumScore"></span><b id="fail-score">0 / 0</b></li>
+            <li><span data-i18n="sumCoins"></span><b id="fail-coins">0</b></li>
+          </ul>
+          <p class="note warn" data-i18n="failNote"></p>
+          <div class="choice-row">
+            <button id="over-continue" class="btn btn-primary" type="button" data-i18n="continue"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 17. LEVEL CLEAR -->
+      <section class="screen" data-screen="level-clear">
+        <div class="panel panel-dark">
+          <h2 class="big-title good" data-i18n="levelClear"></h2>
+          <ul class="summary">
+            <li><span data-i18n="sumScore"></span><b id="sum-score">0 / 0</b></li>
+            <li><span data-i18n="sumCoins"></span><b id="sum-coins">0</b></li>
+            <li><span data-i18n="sumLives"></span><b id="sum-lives">0</b></li>
+          </ul>
+          <div class="choice-row">
+            <button id="clear-next" class="btn btn-primary" type="button" data-i18n="continue"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 22. BOLETÍN DE RESULTADOS -->
+      <section class="screen" data-screen="results">
+        <div class="panel panel-wide panel-dark">
+          <h2 class="panel-title-text" data-i18n="resultsTitle"></h2>
+          <p id="results-player" class="note"></p>
+          <div class="results-wrap">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th data-i18n="thLevel"></th>
+                  <th data-i18n="thTopic"></th>
+                  <th data-i18n="thScore"></th>
+                  <th data-i18n="thResult"></th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+          <p id="results-total" class="results-total"></p>
+          <div class="choice-row">
+            <button id="results-close" class="btn btn-primary" type="button" data-i18n="continue"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 18. WORLD CLEAR -->
+      <section class="screen" data-screen="world-clear">
+        <div class="panel panel-dark">
+          <h2 class="big-title good" data-i18n="worldClear"></h2>
+          <canvas id="seal-canvas" width="200" height="200"></canvas>
+          <p id="world-clear-name" class="world-name"></p>
+          <div class="choice-row">
+            <button id="world-next" class="btn btn-primary" type="button" data-i18n="continue"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 19. VICTORY -->
+      <section class="screen" data-screen="victory">
+        <canvas id="victory-canvas" width="960" height="420"></canvas>
+        <div class="panel panel-victory">
+          <h2 id="victory-title" class="big-title good"></h2>
+          <p id="victory-text" class="note"></p>
+          <button id="victory-next" class="btn btn-primary" type="button" data-i18n="continue"></button>
+        </div>
+      </section>
+
+      <!-- 20. CREDITS -->
+      <section class="screen" data-screen="credits">
+        <div class="panel panel-dark">
+          <h2 class="panel-title-text">THE END</h2>
+          <div class="credits-scroll"><div id="credits-body" class="credits-body"></div></div>
+          <button id="credits-back" class="btn btn-primary" type="button" data-i18n="backToTitle"></button>
+        </div>
+      </section>
+
+      <!-- 21. SETTINGS -->
+      <section class="screen" data-screen="settings">
+        <div class="panel">
+          <h2 class="panel-title-text" data-i18n="settingsTitle"></h2>
+          <div class="setting">
+            <label for="set-music" data-i18n="setMusic"></label>
+            <input id="set-music" type="range" min="0" max="100" value="70">
+          </div>
+          <div class="setting">
+            <label for="set-sfx" data-i18n="setSfx"></label>
+            <input id="set-sfx" type="range" min="0" max="100" value="80">
+          </div>
+          <div class="setting">
+            <span data-i18n="setLang"></span>
+            <div class="choice-row choice-inline">
+              <button class="btn btn-small" type="button" data-setlang="es">ES</button>
+              <button class="btn btn-small" type="button" data-setlang="en">EN</button>
+            </div>
+          </div>
+          <div class="choice-row">
+            <button id="set-wipe" class="btn btn-danger" type="button" data-i18n="wipeSave"></button>
+            <button id="set-close" class="btn btn-primary" type="button" data-i18n="close"></button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /layer-screen -->
+
+    <!-- CAPA 6 : OVERLAYS -->
+    <div id="layer-overlay" class="layer">
+
+      <!-- 12. QUESTION -->
+      <section class="overlay" data-overlay="question">
+        <div class="q-panel">
+          <div class="q-head">
+            <span id="q-category" class="q-category"></span>
+            <span id="q-counter" class="q-counter"></span>
+            <span id="q-timer" class="q-timer hidden">60</span>
+          </div>
+          <img id="q-image" class="q-image hidden" alt="">
+          <p id="q-prompt" class="q-prompt"></p>
+
+          <!-- a) opción múltiple -->
+          <div id="q-options" class="q-options"></div>
+
+          <!-- b) escribir la respuesta con el teclado -->
+          <div id="q-write" class="q-write hidden">
+            <input id="q-input" class="q-input" type="text" maxlength="90"
+                   autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button id="q-send" class="btn btn-primary btn-small" type="button">CHECK</button>
+          </div>
+
+          <!-- c) ordenar la frase -->
+          <div id="q-order" class="q-order hidden">
+            <div id="q-slot" class="q-slot"></div>
+            <div id="q-bank" class="q-bank"></div>
+            <div class="q-order-btns">
+              <button id="q-clear" class="btn btn-small" type="button">CLEAR</button>
+              <button id="q-order-send" class="btn btn-primary btn-small" type="button">CHECK</button>
+            </div>
+          </div>
+          <div class="q-foot">
+            <button id="q-hint" class="btn btn-small" type="button">
+              <span data-i18n="useHint"></span> <b id="q-hint-count">0</b>
+            </button>
+            <p id="q-feedback" class="q-feedback"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 14. PAUSE -->
+      <section class="overlay" data-overlay="pause">
+        <div class="panel panel-dark">
+          <h2 class="panel-title-text" data-i18n="paused"></h2>
+          <div class="menu">
+            <button id="pause-resume" class="btn btn-primary" type="button" data-i18n="resume"></button>
+            <button id="pause-settings" class="btn" type="button" data-i18n="menuSettings"></button>
+            <button id="pause-quit" class="btn btn-ghost" type="button" data-i18n="giveUp"></button>
+          </div>
+          <p class="note warn" data-i18n="pauseNote"></p>
+        </div>
+      </section>
+
+      <!-- 15. LIFE LOST -->
+      <section class="overlay" data-overlay="life-lost">
+        <div class="life-lost-box">
+          <p id="life-lost-text" class="life-lost-text"></p>
+          <div id="life-lost-paws" class="life-lost-paws"></div>
+        </div>
+      </section>
+
+      <!-- Diálogo de confirmación reutilizable -->
+      <section class="overlay" data-overlay="confirm">
+        <div class="panel panel-dark">
+          <p id="confirm-text" class="note"></p>
+          <div class="choice-row">
+            <button id="confirm-yes" class="btn btn-danger" type="button" data-i18n="yes"></button>
+            <button id="confirm-no" class="btn btn-primary" type="button" data-i18n="no"></button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /layer-overlay -->
+
+    <!-- CAPA 7 : TOASTS -->
+    <div id="layer-toast" class="layer"></div>
+
+  </div><!-- /game -->
+</div><!-- /stage -->
+
+<script src="script.js"></script>
+</body>
+</html>
